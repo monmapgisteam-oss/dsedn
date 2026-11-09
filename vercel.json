@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "node scripts/package-vercel-data.mjs --check && npm run build",
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/*/route.ts": {"maxDuration": 300}
+  }
+}

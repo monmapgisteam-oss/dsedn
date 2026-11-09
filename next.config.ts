@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  outputFileTracingExcludes: {"/*": ["./.data/**/*", "./.env*", "./.reference/**/*"]},
+  outputFileTracingIncludes: {
+    "/api/siting": ["./runtime-data/*.json.gz"],
+    "/api/data": ["./runtime-data/mongolia-logistics.json.gz"],
+  },
   experimental: {
     agentFeedback: true,
   },
