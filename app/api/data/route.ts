@@ -4,14 +4,17 @@ import { cached, loadLogistics, loadResource, loadTerrain } from '@/lib/server/p
 import {loadWholeStudy,loadRegions} from '@/lib/server/study-layers';
 import {RENEWABLE_DISPLAY_SCHEMA} from '@/lib/renewable-catalog';
 import {jsonResponse} from '@/lib/server/json-response';
+import {requireApiSession} from '@/lib/server/auth';
 
 export async function GET() {
+  const session=await requireApiSession();if(session instanceof Response)return session;
   try {
     const service=await arcgis('');
     return Response.json({connected:true,layers:service.layers?.map(l=>({id:l.id,name:l.name,geometryType:l.geometryType}))}, {headers:{'Cache-Control':'no-store'}});
   } catch(error) { return Response.json({connected:false,error:error instanceof Error?error.message:'Connection failed'}, {status:502}); }
 }
 export async function POST(request:Request) {
+  const session=await requireApiSession();if(session instanceof Response)return session;
   try {
     const body=await request.json();
     const bounds=['arcgis','renewable'].includes(body.kind)&&[5,6].includes(body.regionLayer)?(await loadWholeStudy(body.regionLayer)).bounds:validateBounds(body.bounds);

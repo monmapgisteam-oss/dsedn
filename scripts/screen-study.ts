@@ -5,11 +5,12 @@ import { analyze } from '../lib/analysis';
 import { makeCells } from '../lib/geo';
 import { generateLayout } from '../lib/planning';
 import { defaultSettings, type Bounds, type LayerData, type Resource, type Terrain } from '../lib/types';
+import { sessionCookie } from './session-cookie';
 
 async function main() {
   const bounds:Bounds=[105.79,49.39,106.065,49.57], meshKm=2;
   async function get<T>(kind:string,extra:Record<string,unknown>={}):Promise<T>{
-    const response=await fetch('http://127.0.0.1:3000/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,bounds,size:meshKm,...extra}),signal:AbortSignal.timeout(180000)});
+    const response=await fetch('http://127.0.0.1:3000/api/data',{method:'POST',headers:{'Content-Type':'application/json',Cookie:sessionCookie()},body:JSON.stringify({kind,bounds,size:meshKm,...extra}),signal:AbortSignal.timeout(180000)});
     const data=await response.json();if(!response.ok)throw new Error(data.error);return data;
   }
   const [overhead,cable,logistics,resource,terrain]=await Promise.all([

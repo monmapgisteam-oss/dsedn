@@ -4,6 +4,8 @@ A Mongolian-language platform for **Дархан Сэлэнгийн Цахилг
 
 ## Run
 
+Use Node.js 22.13 or newer (production uses Node.js 26).
+
 ```sh
 npm ci
 npm run dev
@@ -13,12 +15,22 @@ Open **http://localhost:3000**. The development server binds to `127.0.0.1`. Arc
 
 ## Workflow
 
+Open the public landing page, select **Нэвтрэх**, and use your `gis.selbecity.mn` ArcGIS Enterprise username and password. A successful sign-in opens `/workspace`. The header shows your username and a sign-out button.
+
 1. Choose solar or wind, then **area in hectares**, **capacity in MW**, or **individual panel/turbine count**. A 200-panel request is 200 modules, not 200 tables. Capacity requests round up to the minimum whole equipment count; the actual capacity is displayed.
 2. Choose **Дархан — Renewable /6** (all 27 source polygons, the default) or **Нийт талбай — Renewable /5** (all five source polygons). Search covers the entire polygon union, including holes and disconnected parts. Map pan/zoom does not restrict analysis. The server derives bounds from the full service and ignores legacy rectangle/individual-feature selections. The /5 versus /6 cadastral coverage behavior follows the project owner’s explicit instruction; administrative geometry alone does not establish coverage.
 3. Choose parcel-aware mode (exclude other/unknown owners, allow exact DSEDN organization matches) or parcel-independent comparison mode. These two modes apply to /5. In /6, cadastral queries are skipped and rights are shown as unknown, not clear. Parcel conflicts remain visible in the /5 comparison mode.
 4. Adjust slope, grid/road/centre proximity, river and other setbacks, equipment assumptions, five importance sliders, and the ERA5 start/end dates. Annual production requires 1–30 complete past calendar years (January 1 to December 31); partial seasons cannot silently become annual yields. Run **Тохиромжтой газар хайх**. Progress streams from `/api/siting` as NDJSON.
 5. Compare candidate boundaries, score, capacity, annual production, distances, slope and parcel conflicts. Select a candidate and open **Төлөвлөлт** for actual-size ArcGIS 3D models. The close-up control shows table supports/panels or turbines.
 6. Export the result JSON, candidate GeoJSON or equipment GeoJSON. Use **Үр дүнг хадгалах** to save a private, map-viewable Feature Collection item into the `renewable` folder in the supplied ArcGIS Enterprise portal. Completed runs also receive a server-generated ID and a local snapshot in ignored `.data/runs/`. UI state is in memory; export or save before reloading. The export contains request assumptions, source provenance, mapped input layers, candidates and layouts. Raw hourly ERA5 and DEM tiles remain in ignored `.data/siting/` for reproducibility.
+
+## Authentication
+
+The fixed identity provider is `https://gis.selbecity.mn/geoportal`. Login uses its advertised `generateToken` endpoint for built-in Portal username/password accounts. SAML/OIDC-only or MFA accounts require a future registered OAuth integration; the current form does not implement that flow. Credentials are forwarded in HTTPS POST bodies and are not persisted or logged by the application. The user's token is stored in an encrypted, HttpOnly, SameSite=Lax cookie (Secure in production), with a maximum two-hour lifetime bounded by Portal's expiry. Each protected page/API request revalidates the token with Portal, so revoked or disabled accounts fail closed. Login/logout require a matching Origin. All four data/result APIs require a valid session. Result items are saved under the signed-in user's Portal account.
+
+Set a cryptographically random `SESSION_SECRET` of at least 32 characters in ignored `.env.local` and as a server-only Vercel secret for Production/Preview. Never commit the secret or prefix it with `NEXT_PUBLIC_`. Rotating it signs out existing users. `ARCGIS_API_KEY` remains the server's read-only data credential and cannot substitute for user login. The local HTTP verification scripts also need `DSEDN_SESSION_COOKIE` set to the value of an authenticated local browser's `dsedn_session` cookie; never put a session cookie in source or command-line arguments.
+
+The landing image is a generated concept visualization, not a photograph of an existing facility. The built-in image generation tool created `public/brand/renewable-hero.png`; its full prompt is recorded in [docs/landing-image.txt](docs/landing-image.txt).
 
 ## Whole-layer computation
 
@@ -135,7 +147,7 @@ npm test
 npm run lint
 npx tsc --noEmit
 npm run build
-# With the local development server running:
+# With the local development server running and DSEDN_SESSION_COOKIE set:
 node --import tsx scripts/verify-siting.ts --all
 ```
 

@@ -4,6 +4,7 @@ import "./globals.css";
 import "./workspace.css";
 import "./siting.css";
 import "./map-studio.css";
+import "./landing.css";
 
 const inter = Inter({ variable: "--font-sans", subsets: ["latin", "cyrillic"] });
 

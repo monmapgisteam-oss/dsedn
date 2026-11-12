@@ -2,8 +2,10 @@ import {loadRegions,loadRivers,loadWholeStudy} from '@/lib/server/study-layers';
 import {loadTransport} from '@/lib/server/transport';
 import {scopeName} from '@/lib/search-scope';
 import {jsonResponse} from '@/lib/server/json-response';
-export async function GET(){try{const layers=await Promise.all([loadRegions(5),loadRegions(6)]);return jsonResponse({layers});}catch(e){return Response.json({error:e instanceof Error?e.message:'Хил татагдсангүй.'},{status:502});}}
+import {requireApiSession} from '@/lib/server/auth';
+export async function GET(){const session=await requireApiSession();if(session instanceof Response)return session;try{const layers=await Promise.all([loadRegions(5),loadRegions(6)]);return jsonResponse({layers});}catch(e){return Response.json({error:e instanceof Error?e.message:'Хил татагдсангүй.'},{status:502});}}
 export async function POST(request:Request){
+ const session=await requireApiSession();if(session instanceof Response)return session;
  try{const r=await request.json();if(![5,6].includes(r.regionLayer)||!Number.isFinite(r.riverSetbackM)||r.riverSetbackM<1||r.riverSetbackM>3000)throw new Error('Бүс эсвэл голын хамгаалах зай буруу.');
   const scope=await loadWholeStudy(r.regionLayer),regions=scope.regions,b=scope.bounds;
   if(r.part){

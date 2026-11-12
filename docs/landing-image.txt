@@ -1,0 +1,6 @@
+Asset: public/brand/renewable-hero.png
+Method: built-in image_gen tool, generated for this project.
+Purpose: Conceptual renewable energy background; does not represent an existing facility.
+
+Final generation prompt:
+Use case: stylized-concept. Asset type: full-bleed website landing-page background, very wide landscape 16:9. Create a premium photorealistic architectural visualization of a proposed renewable energy park in the Mongolian steppe at blue hour. Aerial oblique view, with orderly deep-blue solar panel arrays across the lower center and right, a small modern electrical substation with warm amber lighting, realistic slender white three-bladed wind turbines across the rolling hills toward the upper right, distant mountains and a restrained twilight horizon. Composition: most infrastructure and visual detail in the RIGHT two-thirds, calm dark terrain and atmospheric negative space in the LEFT third for a large white title; leave a quiet dark area at the top for navigation. Sophisticated realistic materials, dusk navy/teal palette, warm lights, detailed terrain, cinematic but credible engineering visualization. No coal station, no chimneys or smoke. Absolutely no words, logos, interface elements, borders or watermark. This is a conceptual scene, not documentation of an actual power plant.

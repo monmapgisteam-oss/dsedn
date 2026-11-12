@@ -10,6 +10,14 @@ test('read-only API key is not mistaken for a portal user or write permission',a
  t.mock.method(globalThis,'fetch',async()=>Response.json({appInfo:{appOwner:'owner',privileges:['portal:app:access:item:source']}}));
  await assert.rejects(portalIdentity('test-key'),/хэрэглэгчийн эрхгүй/);
 });
+
+test('Portal user identity checks preserve the referrer bound to the signed-in token',async t=>{
+ t.mock.method(globalThis,'fetch',async(_url:unknown,init:RequestInit)=>{
+  assert.equal(new Headers(init.headers).get('referer'),'https://renewable.twincore.mn');
+  return Response.json({username:'portal-user'});
+ });
+ assert.equal(await portalIdentity('test-user-token','https://renewable.twincore.mn'),'portal-user');
+});
 test('Enterprise payload contains native map layers, chosen settings and no source cadastral data',()=>{
  const r=run();r.layers.parcels=featureCollection([point([106,49.5],{owner_name:'do-not-export'})]);const data=enterpriseResult(r);
  assert.equal(data.layers.length,4);assert.equal(data.layers[0].featureSet.features[0].geometry.x,106);assert.equal(data.layers[0].featureSet.features[0].attributes.score,80);assert.deepEqual(data.dsednAnalysis.request.weights,initialRequest.weights);assert.equal(JSON.stringify(data).includes('do-not-export'),false);

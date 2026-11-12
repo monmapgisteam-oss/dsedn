@@ -1,5 +1,5 @@
-﻿import Workspace from '@/components/site-workspace';
+import Landing from '@/components/landing';
 
 export default function Home() {
-  return <Workspace />;
+  return <Landing />;
 }

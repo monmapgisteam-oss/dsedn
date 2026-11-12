@@ -1,9 +1,10 @@
 import {writeFile} from 'node:fs/promises';
 import {initialRequest,type SiteRun} from '../lib/siting';
+import {sessionCookie} from './session-cookie';
 async function main(){
  const scenarios=process.argv.includes('--all')?[{name:'area20',patch:{}},{name:'count200',patch:{mode:'count',value:200}},{name:'count200-no-parcels',patch:{mode:'count',value:200,parcels:false}},{name:'solar100mw',patch:{mode:'capacity',value:100}},{name:'wind30',patch:{technology:'wind',mode:'count',value:30,maxSlope:15,settlementSetbackM:500}}]:[{name:'area20',patch:{}}];
  for(const s of scenarios){
-  console.time(s.name);const response=await fetch('http://127.0.0.1:3000/api/siting',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...initialRequest,...s.patch})});
+  console.time(s.name);const response=await fetch('http://127.0.0.1:3000/api/siting',{method:'POST',headers:{'Content-Type':'application/json',Cookie:sessionCookie()},body:JSON.stringify({...initialRequest,...s.patch})});
   if(!response.ok)throw new Error(await response.text());
   const text=await response.text(),events=text.trim().split('\n').map(line=>JSON.parse(line));
   const error=events.find(e=>e.type==='error');if(error)throw new Error(error.message);

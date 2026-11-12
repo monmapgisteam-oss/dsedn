@@ -2,9 +2,11 @@ import {validateRequest,type SiteRequest} from '@/lib/siting';
 import {searchWholeArea} from '@/lib/server/whole-area-search';
 import {rememberRun} from '@/lib/server/results';
 import {onVercel} from '@/lib/server/runtime-storage';
+import {requireApiSession} from '@/lib/server/auth';
 
 export const maxDuration=300;
 export async function POST(request:Request){
+ const session=await requireApiSession();if(session instanceof Response)return session;
  let input:SiteRequest;
  try{input=await request.json();input.regionId=0;validateRequest(input);}catch(e){return Response.json({error:e instanceof Error?e.message:'Хүсэлт буруу.'},{status:400});}
  const abort=new AbortController(),signal=AbortSignal.any([request.signal,abort.signal]);
