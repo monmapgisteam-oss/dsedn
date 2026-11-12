@@ -18,3 +18,7 @@
 .dsedn-shell .header-tools>.button:disabled{opacity:.55}
 .dsedn-shell .language-tag{display:inline-flex;align-items:center;height:36px;padding:0 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink-2);letter-spacing:.06em}
 @media(max-width:760px){.dsedn-shell .header-tools{gap:6px}.dsedn-shell .header-tools>.button{width:36px;padding:0}.dsedn-shell .language-tag{display:none}}
+/* Compact panel heading. */
+.dsedn-shell .panel-heading{padding-block:12px 10px}
+.dsedn-shell .panel-heading h1{margin:3px 0 0}
+.dsedn-shell .panel-heading>p{margin-top:3px}

@@ -16,6 +16,13 @@ export default function Landing({ startWithLogin = false }: { startWithLogin?: b
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   useEffect(() => { if (startWithLogin && !dialog.current?.open) dialog.current?.showModal(); }, [startWithLogin]);
+  // With cacheComponents, Next.js keeps this page mounted but hidden (React <Activity>) after navigating to the
+  // workspace. A modal dialog left open there keeps the whole document inert, so the workspace ignores the mouse
+  // until a full reload. Close it, and release the busy state, whenever this page is hidden or unmounted.
+  useEffect(() => {
+    const element = dialog.current;
+    return () => { if (element?.open) element.close(); setBusy(false); };
+  }, []);
   function openLogin() { setError(''); dialog.current?.showModal(); }
   function closeLogin() { dialog.current?.close(); }
   async function login(event: FormEvent<HTMLFormElement>) {
