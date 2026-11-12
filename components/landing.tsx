@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ArrowRight, Eye, EyeOff, LoaderCircle, LockKeyhole, X } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, LoaderCircle, X } from 'lucide-react';
 import hero from '@/public/brand/renewable-hero.png';
 
 export default function Landing({ startWithLogin = false }: { startWithLogin?: boolean }) {
@@ -50,21 +50,15 @@ export default function Landing({ startWithLogin = false }: { startWithLogin?: b
     <section className="landing-content" aria-labelledby="landing-title">
       <div className="landing-eyebrow"><span />ДАРХАН · СЭЛЭНГЭ</div>
       <h1 id="landing-title">СЭРГЭЭГДЭХ<br />ЭРЧИМ ХҮЧ</h1>
-      <p className="landing-subtitle">БАЙРШЛЫН ҮНЭЛГЭЭ, ТӨЛӨВЛӨЛТИЙН ПЛАТФОРМ</p>
-      <p className="landing-description">Байгалийн нөөцөөс бодит төлөвлөлтөд.</p>
-    </section>
+      <p className="landing-subtitle">БАЙРШЛЫН ҮНЭЛГЭЭ, ТӨЛӨВЛӨЛТИЙН ПЛАТФОРМ</p>    </section>
     <footer className="landing-footer">
       <span>Дархан Сэлэнгийн Цахилгаан Түгээх Сүлжээ ХК</span>
       <span className="landing-footer-caption">НАР · САЛХИ · ЦАХИЛГААН СҮЛЖЭЭ<small>Концепц дүрслэл</small></span>
     </footer>
     <dialog ref={dialog} className="login-dialog" aria-labelledby="login-title" onClose={() => { if (password.current) password.current.value = ''; setShowPassword(false); opener.current?.focus(); }} onClick={event => { if (event.target === dialog.current && !busy) closeLogin(); }} onCancel={event => { if (busy) event.preventDefault(); }}>
       <div className="login-card">
-        <button className="login-close" type="button" aria-label="Нэвтрэх цонх хаах" disabled={busy} onClick={closeLogin}><X size={20} /></button>
-        <div className="login-mark"><LockKeyhole size={23} /></div>
-        <span className="login-eyebrow">ДСЦТС · GIS ПЛАТФОРМ</span>
-        <h2 id="login-title">Тавтай морил</h2>
-        <p className="login-intro">Байгууллагын GIS эрхээрээ нэвтэрнэ үү.</p>
-        <form onSubmit={login} aria-busy={busy}>
+        <button className="login-close" type="button" aria-label="Нэвтрэх цонх хаах" disabled={busy} onClick={closeLogin}><X size={20} /></button>        <span className="login-eyebrow">ДСЦТС · GIS ПЛАТФОРМ</span>
+        <h2 id="login-title">Тавтай морил</h2>        <form onSubmit={login} aria-busy={busy}>
           <label htmlFor="login-username">Хэрэглэгчийн нэр</label>
           <input id="login-username" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="Хэрэглэгчийн нэрээ оруулна уу" required maxLength={128} disabled={busy} autoFocus />
           <label htmlFor="login-password">Нууц үг</label>
@@ -74,10 +68,7 @@ export default function Landing({ startWithLogin = false }: { startWithLogin?: b
           </div>
           {error && <p className="login-error" role="alert">{error}</p>}
           <button className="login-submit" type="submit" disabled={busy}>{busy ? <><LoaderCircle size={18} className="spin" />Нэвтэрч байна…</> : <>Нэвтрэх<ArrowRight size={18} /></>}</button>
-        </form>
-        <div className="login-provider"><span className="login-provider-dot" /><span>ArcGIS Enterprise<strong>gis.selbecity.mn</strong></span><LockKeyhole size={15} /></div>
-        <p className="login-help">Нэвтрэх эрхгүй бол байгууллагын GIS администраторт хандана уу.</p>
-      </div>
+        </form>      </div>
     </dialog>
   </main>;
 }

@@ -36,6 +36,9 @@ export async function readStoredJson<T>(name:string):Promise<T>{
  return JSON.parse((await decompress(Buffer.from(await new Response(blob.stream).arrayBuffer()))).toString('utf8')) as T;
 }
 export async function readReferenceJson<T>(name:'mongolia-context'|'mongolia-logistics'):Promise<T>{
- if(onVercel())return JSON.parse((await decompress(await readFile(join(process.cwd(),'runtime-data',name+'.json.gz')))).toString('utf8')) as T;
- return JSON.parse(await readFile(join(process.cwd(),'.data',name+'.json'),'utf8')) as T;
+ const packaged=async()=>JSON.parse((await decompress(await readFile(join(process.cwd(),'runtime-data',name+'.json.gz')))).toString('utf8')) as T;
+ if(onVercel())return packaged();
+ // A fresh checkout has no prepared `.data` extract; the committed packaged copy holds the same features.
+ try{return JSON.parse(await readFile(join(process.cwd(),'.data',name+'.json'),'utf8')) as T;}
+ catch(e){if((e as NodeJS.ErrnoException).code!=='ENOENT')throw e;return packaged();}
 }

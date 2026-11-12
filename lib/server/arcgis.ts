@@ -2,10 +2,11 @@ import type { Collection, Bounds, LayerData } from '../types';
 import { isDsednOwner } from '../ownership';
 import {electricalDisplayFields,electricalDisplay,renewableLayers,type DisplayField} from '../renewable-catalog';
 import {cached} from './providers';
+import {RENEWABLE_SERVICE_URL,serviceLayerPath} from './enterprise';
 import {length} from '@turf/turf';
 import type {Feature,LineString,MultiLineString} from 'geojson';
 
-const service = 'https://gis.selbecity.mn/map/rest/services/Hosted/Renewable/FeatureServer';
+const service = RENEWABLE_SERVICE_URL;
 const fields: Record<number,string> = {
   0:'objectid,air_line_name,voltage_level',
   4:'objectid,voltage_level_cable',
@@ -13,12 +14,12 @@ const fields: Record<number,string> = {
   7:'objectid,owner_midd,owner_firs,owner_name',
   8:'objectid,possession,possessi_1,possessi_2',
 };
-type ArcGISResponse = { error?: {code:number}; objectIds?:number[]; features?:Collection['features']; type?:string; exceededTransferLimit?:boolean; name?:string; fields?:unknown[]; layers?:{id:number;name:string;geometryType:string}[] };
+type ArcGISResponse = { error?: {code:number}; objectIds?:number[]; features?:Collection['features']; type?:string; exceededTransferLimit?:boolean; name?:string; objectIdField?:string; fields?:unknown[]; layers?:{id:number;name:string;geometryType:string}[] };
 
 export async function arcgis(path: string, values: Record<string,string> = {}): Promise<ArcGISResponse> {
   const key = process.env.ARCGIS_API_KEY;
   if (!key) throw new Error('ArcGIS is not configured. Set ARCGIS_API_KEY in .env.local on the server.');
-  const response = await fetch(`${service}${path}`, {method:'POST', body:new URLSearchParams({f:'json', ...values, token:key}), cache:'no-store', redirect:'error', signal:AbortSignal.timeout(30000)});
+  const response = await fetch(`${service}${serviceLayerPath(path)}`, {method:'POST', body:new URLSearchParams({f:'json', ...values, token:key}), cache:'no-store', redirect:'error', signal:AbortSignal.timeout(30000)});
   if (!response.ok) throw new Error(`ArcGIS returned HTTP ${response.status}.`);
   const data = await response.json() as ArcGISResponse;
   if (data.error) throw new Error([498,499].includes(data.error.code) ? 'ArcGIS authorization failed. Update the server credential.' : `ArcGIS query failed (${data.error.code}).`);

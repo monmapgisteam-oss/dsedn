@@ -24,7 +24,19 @@ export async function loadERA5(bounds:Bounds, progress:(s:string)=>void=()=>{},s
     catch(error) {
       if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;
       const q=new URLSearchParams({latitude:lat.toFixed(4),longitude:lon.toFixed(4),start_date:`${year}-01-01`,end_date:`${year}-12-31`,models:'era5',hourly:fields.join(','),wind_speed_unit:'ms',timezone:'GMT',cell_selection:'nearest'});
-      const response=await fetch(`https://archive-api.open-meteo.com/v1/archive?${q}`,{signal:AbortSignal.timeout(90000)});
+      // Open-Meteo's free archive API has per-minute, per-hour and per-day quotas. A minute quota clears by
+      // waiting; the longer ones cannot be waited out inside one run, so they are reported as such.
+      let response:Response;
+      for(let attempt=0;;attempt++){
+        response=await fetch(`https://archive-api.open-meteo.com/v1/archive?${q}`,{signal:AbortSignal.timeout(90000)});
+        if(response.status!==429)break;
+        const reason=await response.json().then(d=>String(d?.reason??''),()=>'');
+        if(/hourly/i.test(reason))throw new Error('ERA5 (Open-Meteo) цагийн хүсэлтийн хязгаарт хүрлээ. Нэг цагийн дараа дахин хайна уу; татсан өгөгдөл хадгалагдсан тул үргэлжлүүлнэ.');
+        if(/daily/i.test(reason))throw new Error('ERA5 (Open-Meteo) өдрийн хүсэлтийн хязгаарт хүрлээ. Маргааш дахин хайна уу; татсан өгөгдөл хадгалагдсан тул үргэлжлүүлнэ.');
+        if(attempt>=3)throw new Error('ERA5 өгөгдөл татагдсангүй (HTTP 429). Хэдэн минутын дараа дахин хайна уу.');
+        progress(`ERA5 · хүсэлтийн хязгаар, 65 секунд хүлээж байна (${attempt+1}/3)`);
+        await new Promise(resolve=>setTimeout(resolve,65000));
+      }
       if(!response.ok)throw new Error(`ERA5 өгөгдөл татагдсангүй (HTTP ${response.status}).`);
       data=await response.json();
       await writeFile(path,JSON.stringify(data));

@@ -1,6 +1,7 @@
 import { sealData, unsealData } from 'iron-session';
+import { PORTAL_URL } from './enterprise';
 
-export const PORTAL_URL = 'https://gis.selbecity.mn/geoportal';
+export { PORTAL_URL };
 export const SESSION_COOKIE = 'dsedn_session';
 export const SESSION_SECONDS = 2 * 60 * 60;
 export type PortalSession = {
@@ -84,7 +85,11 @@ export async function signInToPortal(username: unknown, password: unknown, refer
 }
 
 export function sameOrigin(request: Request) {
-  return request.headers.get('origin') === new URL(request.url).origin;
+  const origin = request.headers.get('origin');
+  if (!origin) return false;
+  if (origin === new URL(request.url).origin) return true;
+  // `next dev` reports request.url as localhost even when visited via 127.0.0.1; the Host header is what the browser addressed.
+  try { return new URL(origin).host === request.headers.get('host'); } catch { return false; }
 }
 
 export async function readLoginBody(request: Request) {

@@ -2,20 +2,26 @@ import {arcgis} from './arcgis';
 import {bboxClip} from '@turf/turf';
 import type {Feature,LineString,MultiLineString} from 'geojson';
 import {cached} from './providers';
+import {RENEWABLE_SERVICE_URL,RIVER_SERVICE_URL} from './enterprise';
 import {studyMask,riverProtection} from '../study-area';
 import type {Bounds,Collection,LayerData} from '../types';
 import {wholeStudy} from '../search-scope';
 
 export async function loadWholeStudy(layer:5|6){return cached(`whole-study:${layer}`,async()=>{const regions=await loadRegions(layer);return {...wholeStudy(regions.data),regions};});}
 
-export const renewableService='https://gis.selbecity.mn/map/rest/services/Hosted/Renewable/FeatureServer';
-export const riverService='https://gis.selbecity.mn/map/rest/services/Hosted/'+encodeURIComponent('Гол_')+'/FeatureServer';
+export const renewableService=RENEWABLE_SERVICE_URL;
+export const riverService=RIVER_SERVICE_URL;
 export async function loadRegions(layer:5|6):Promise<LayerData>{
  return cached(`study-regions:${layer}`,async()=>{
   const ids=await arcgis(`/${layer}/query`,{where:'1=1',returnIdsOnly:'true'});
   if(!Array.isArray(ids.objectIds)||!ids.objectIds.length||ids.objectIds.length>1000)throw new Error('Хилийн ID жагсаалт бүрэн ирсэнгүй.');
+  // The code identifies regions by `objectid_1`, the object ID field of the original service. A republished
+  // copy may use another object ID field and leave `objectid_1` empty, so always take the service's real ID.
+  const oid=(await arcgis(`/${layer}`)).objectIdField;
+  if(typeof oid!=='string'||!/^\w+$/.test(oid))throw new Error('Хилийн давхаргын ID талбар тодорхойлогдсонгүй.');
   const features:Collection['features']=[];
-  for(let i=0;i<ids.objectIds.length;i+=100){const batch=ids.objectIds.slice(i,i+100);const page=await arcgis(`/${layer}/query`,{objectIds:batch.join(','),outFields:'objectid_1,name,code',outSR:'4326',returnGeometry:'true',returnZ:'false',returnM:'false',f:'geojson'});
+  for(let i=0;i<ids.objectIds.length;i+=100){const batch=ids.objectIds.slice(i,i+100);const page=await arcgis(`/${layer}/query`,{objectIds:batch.join(','),outFields:`${oid},name,code`,outSR:'4326',returnGeometry:'true',returnZ:'false',returnM:'false',f:'geojson'});
+   for(const f of page.features??[])f.properties={objectid_1:f.properties?.[oid],name:f.properties?.name,code:f.properties?.code};
    if(page.type!=='FeatureCollection'||page.features?.length!==batch.length||page.exceededTransferLimit||new Set(page.features.map(f=>f.properties?.objectid_1)).size!==batch.length||page.features.some(f=>!batch.includes(f.properties?.objectid_1)||!['Polygon','MultiPolygon'].includes(f.geometry?.type)))throw new Error('Хилийн геометр / ID бүрэн ирсэнгүй.');features.push(...page.features);
   }
   return {data:{type:'FeatureCollection',features},provenance:{name:`Хайлтын хил · Renewable /${layer}`,source:`${renewableService}/${layer}`,retrievedAt:new Date().toISOString(),detail:`Complete polygon layer, ${features.length} features. Parcel coverage mode follows the project owner's layer selection; administrative geometry alone does not prove cadastral coverage.`}};

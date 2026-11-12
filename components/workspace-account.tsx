@@ -10,6 +10,6 @@ export function WorkspaceAccount({ username, expiresAt }: { username: string; ex
     return () => window.clearTimeout(timer);
   }, [expiresAt, router]);
   return <form className="workspace-account" action="/api/auth/logout" method="post">
-    <span title={username}>{username}</span><button type="submit" title="Гарах" aria-label="Системээс гарах"><LogOut size={16} /></button>
+    <i aria-hidden="true">{username.charAt(0).toUpperCase()}</i><span title={username}>{username}</span><button type="submit" title="Гарах" aria-label="Системээс гарах"><LogOut size={16} /></button>
   </form>;
 }

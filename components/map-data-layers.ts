@@ -12,7 +12,7 @@ const pause=()=>new Promise<void>(resolve=>setTimeout(resolve,0));
 export const analysisLayers=new Set(['screening','results','boundary','parcelOverlap','riverProtection','context','soums',...renewableLayers.map(l=>renewableKey(l.id))]);
 const scales:Record<string,number>={parcels:80000,context:180000,roads:300000,riverProtection:200000,roadProjects:600000};
 const layerStyle:Record<string,{color:string;width:number;alpha?:number;dash?:boolean}>={
- boundary:{color:'#177965',width:1.6},grid:{color:'#d17a35',width:1.3},roads:{color:'#a0a9af',width:1},nationalRoads:{color:'#718294',width:2.2},soums:{color:'#94a3b8',width:1,dash:true},rivers:{color:'#269cce',width:1.5},riverProtection:{color:'#97d4e6',width:.4,alpha:.2},context:{color:'#91a9aa',width:.5,alpha:.12},parcels:{color:'#ad83c5',width:.6,alpha:.14},results:{color:'#13866c',width:1.5,alpha:.22},parcelOverlap:{color:'#dc5a52',width:1,alpha:.55},exclusions:{color:'#b98996',width:1,alpha:.15},
+ boundary:{color:'#177965',width:1.6},grid:{color:'#d17a35',width:.8},roads:{color:'#a0a9af',width:.8},nationalRoads:{color:'#718294',width:1.4},soums:{color:'#94a3b8',width:1,dash:true},rivers:{color:'#269cce',width:1},riverProtection:{color:'#97d4e6',width:.4,alpha:.2},context:{color:'#91a9aa',width:.5,alpha:.12},parcels:{color:'#ad83c5',width:.6,alpha:.14},results:{color:'#13866c',width:1.5,alpha:.22},parcelOverlap:{color:'#dc5a52',width:1,alpha:.55},exclusions:{color:'#b98996',width:1,alpha:.15},
 };
 export class MapDataLayers{
  readonly graphics=new Map<string,GraphicsLayer>();
@@ -47,7 +47,7 @@ export class MapDataLayers{
  private graphic(id:string,f:Feature<Geometry>):Graphic[]{
   const geometry=mapGeometry(f);if(!geometry)return [];const p=f.properties??{};
   const source=renewableLayers.find(l=>renewableKey(l.id)===id);
-  if(source)return [new Graphic({geometry,attributes:{...p,sourceLayer:source.id},symbol:(geometry.type==='polygon'?{type:'simple-fill',color:rgba(source.color,source.id>=7?.12:.03),outline:{color:p.dsedn?'#168654':source.color,width:p.dsedn?1.7:1,style:source.id===5?'dash':'solid'}}:{type:'simple-line',color:source.color,width:source.id===0?1.7:1.6,style:source.id===0?'solid':source.id===1?'short-dot':'dash'}) as never})];
+  if(source)return [new Graphic({geometry,attributes:{...p,sourceLayer:source.id},symbol:(geometry.type==='polygon'?{type:'simple-fill',color:rgba(source.color,source.id>=7?.12:.03),outline:{color:p.dsedn?'#168654':source.color,width:p.dsedn?1.7:1,style:source.id===5?'dash':'solid'}}:{type:'simple-line',color:source.color,width:source.id===0?.9:.8,style:source.id===0?'solid':source.id===1?'short-dot':'dash'}) as never})];
   if(id==='centres'||id==='roadProjects'){
    const name=String(p.displayName||p.name||'');return [new Graphic({geometry,attributes:p,symbol:{type:'simple-marker',style:id==='centres'?'circle':'square',size:id==='centres'?7:5,color:id==='centres'?'#167aab':'#9b72ad',outline:{color:'#fff',width:1.4}}}),...(name?[new Graphic({geometry,symbol:{type:'text',text:name,color:'#234658',haloColor:'#fff',haloSize:1.5,yoffset:11,font:{size:9,family:'Arial',weight:'bold'}}})]:[])];
   }

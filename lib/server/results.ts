@@ -2,7 +2,8 @@ import {randomUUID} from 'node:crypto';
 import type {SiteRun} from '../siting';
 import {enterpriseResult} from '../enterprise-result';
 import {readStoredJson,writeStoredJson} from './runtime-storage';
-export const portal='https://gis.selbecity.mn/geoportal';
+import {PORTAL_URL} from './enterprise';
+export const portal=PORTAL_URL;
 export async function rememberRun(run:SiteRun){run.id=randomUUID();await writeStoredJson(run.id+'.json',run);return run;}
 export async function readRun(id:string):Promise<SiteRun>{if(!/^[a-f0-9-]{36}$/.test(id))throw new Error('Тооцооллын ID буруу.');try{return await readStoredJson<SiteRun>(id+'.json');}catch{throw new Error('Тооцооны хадгалсан хувилбар олдсонгүй. Дахин тооцоолно уу.');}}
 type PortalResponse={error?:{code:number};username?:string;user?:{username:string};privileges?:string[];appInfo?:{appOwner:string;privileges:string[]};folders?:{id:string;title:string}[];folder?:{id:string};id?:string;success?:boolean;access?:string;type?:string;ownerFolder?:string};
