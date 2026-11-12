@@ -118,7 +118,7 @@ These create `.data/mongolia-logistics.json` and `.data/mongolia-context.json`. 
 
 ## Vercel deployment
 
-Production: https://dsedn-renewable.vercel.app (project `monmap/dsedn-renewable`). The Vercel CLI is linked through the ignored `.vercel/project.json`; credentials and local analysis archives are excluded by `.vercelignore` and Next.js output tracing.
+Production: https://renewable.twincore.mn (also https://dsedn-renewable.vercel.app; project `monmap/dsedn-renewable`). Source: https://github.com/monmapgisteam-oss/dsedn. Vercel is connected to the repository's `main` production branch. The Vercel CLI is linked through the ignored `.vercel/project.json`; credentials and local analysis archives are excluded by `.vercelignore` and Next.js output tracing.
 
 After updating the public OSM extracts, run `node scripts/package-vercel-data.mjs`. This writes gzip copies into `runtime-data/`, preserving all source features and provenance. The deployment build validates both files. Keep these files with the deployment source; they are server assets, not public browser downloads. The original `.data` files remain the local-development inputs.
 
@@ -126,7 +126,7 @@ Configure `ARCGIS_API_KEY` as an encrypted **server-only** environment variable 
 
 Large GIS responses stream in chunks. The current Hobby plan permits up to 300 seconds per function invocation; hosted analysis sends an explicit error at 275 seconds and does not label an interrupted calculation as complete. Full-region runs can exceed this limit, especially with cold DEM/ERA5 downloads. Use the local Node server for those runs until a durable background-job backend is implemented. Increasing `maxDuration` alone does not remove the plan limit.
 
-Deploy subsequent changes with `vercel deploy --prod`. On Windows, use `vercel.cmd` if PowerShell blocks the script shim. The CLI's native Windows `env run -- node ...` dispatcher currently needs the absolute `node.exe` path; this was verified and reported to Vercel. Do not download production credentials for routine verification.
+Push subsequent changes to `main` with `git push origin main` to trigger a production deployment automatically. For a manual deployment, use `vercel deploy --prod`. On Windows, use `vercel.cmd` if PowerShell blocks the script shim. The CLI's native Windows `env run -- node ...` dispatcher currently needs the absolute `node.exe` path; this was verified and reported to Vercel. Do not download production credentials for routine verification.
 
 ## Verify
 
