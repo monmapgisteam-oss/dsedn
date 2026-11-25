@@ -22,3 +22,40 @@
 .dsedn-shell .panel-heading{padding-block:12px 10px}
 .dsedn-shell .panel-heading h1{margin:3px 0 0}
 .dsedn-shell .panel-heading>p{margin-top:3px}
+/* Saved models: header button with a dropdown of results saved to Portal. */
+.saved-models{position:relative}
+.dsedn-shell .saved-models>.button{height:36px;border-radius:999px;padding:0 14px;border-color:var(--line);font-weight:600}
+.saved-models-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:40;width:340px;max-height:min(460px,calc(100dvh - 120px));display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 44px #16372b2e;overflow:hidden}
+.saved-models-panel header{display:flex;align-items:center;gap:6px;padding:12px 12px 11px 15px;border-bottom:1px solid var(--line)}
+.saved-models-panel header b{font-size:12px}
+.saved-models-panel header span{font-size:9px;color:var(--muted);margin-right:auto}
+.saved-models-panel header button{display:grid;place-items:center;width:28px;height:28px;border-radius:7px;color:var(--muted)}
+.saved-models-panel header button:hover{background:var(--surface-2);color:var(--accent)}
+.saved-models-panel ul{list-style:none;margin:0;padding:6px;overflow:auto}
+.saved-models-panel li{display:flex;align-items:center;gap:2px;border-radius:8px}
+.saved-models-panel li:hover{background:var(--sunken)}
+.saved-model{display:flex;align-items:center;gap:10px;flex:1;min-width:0;padding:9px;text-align:left;border-radius:8px}
+.saved-model:disabled{cursor:default;opacity:.55}
+.saved-model i{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:8px;background:var(--sunken);color:var(--accent)}
+.saved-model span{display:flex;flex-direction:column;min-width:0;flex:1}
+.saved-model b{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved-model small{font-size:9px;color:var(--muted);margin-top:2px}
+.saved-models-panel li>a{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:7px;color:var(--muted)}
+.saved-models-panel li>a:hover{color:var(--accent)}
+.saved-models-empty{display:flex;align-items:center;gap:7px;padding:18px 16px;font-size:11px;line-height:1.6;color:var(--muted)}
+.saved-models-error{margin:10px 12px 0;padding:8px 10px;border-radius:7px;background:color-mix(in srgb,var(--bad) 10%,transparent);color:var(--bad);font-size:10px;line-height:1.5}
+@media(max-width:1250px){.dsedn-shell .saved-models>.button>span{display:none}.dsedn-shell .saved-models>.button{width:36px;padding:0}}
+@media(max-width:760px){.saved-models-panel{position:fixed;left:12px;right:12px;top:64px;width:auto}}
+/* Smaller headline numbers throughout the workspace. */
+.dsedn-shell .result-summary strong{font-size:18px;letter-spacing:-.3px;margin-top:3px}
+.dsedn-shell .cell-score>b{font-size:20px;letter-spacing:-.4px}
+.dsedn-shell .map-stat-row b{font-size:16px;letter-spacing:-.2px}
+.dsedn-shell .demand-value input{font-size:22px}
+@media(max-width:1000px){.dsedn-shell .map-stat-row b{font-size:15px}}
+.dsedn-shell .candidate-list strong{font-size:13px;font-weight:700}
+.dsedn-shell .panel-heading h1{font-size:16px;font-weight:600;letter-spacing:-.2px}
+.dsedn-shell .panel-heading h1{font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.dsedn-shell .panel-heading h1{margin:0}
+/* 3D pole/line note: bottom centre, clear of the 3D settings panel and the legend. */
+.dsedn-shell .infrastructure-note{left:50%;right:auto;bottom:30px;transform:translateX(-50%);width:max-content;max-width:min(420px,calc(100% - 560px))}
+@media(max-width:1250px){.dsedn-shell .infrastructure-note{max-width:calc(100% - 32px);bottom:100px}}

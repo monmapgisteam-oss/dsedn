@@ -75,7 +75,8 @@ export default function StudyMap(props:Props){
    v.ui.move(['zoom','navigation-toggle','compass'],'top-right');
    v.ui.add([
     {component:layersSlot,position:'top-right',index:0},
-    ...(dim==='2d'?[{component:new Expand({view:v,content:new BasemapGallery({view:v,source:new LocalBasemapsSource({basemaps:Object.values(choices)})}),expandIcon:'basemap',expandTooltip:'Суурь зураг',collapseTooltip:'Суурь зураг хаах',group:'top-right'}),position:'top-right' as const,index:1}]:[]),
+    // Basemap gallery in both views. 3D opens on imagery; a choice made there does not change the 2D default.
+    {component:new Expand({view:v,content:new BasemapGallery({view:v,source:new LocalBasemapsSource({basemaps:Object.values(choices)})}),expandIcon:'basemap',expandTooltip:'Суурь зураг',collapseTooltip:'Суурь зураг хаах',group:'top-right'}),position:'top-right',index:1},
     {component:home,position:'top-right',index:2},
     {component:focusSlot,position:'top-right',index:3},
     {component:new Fullscreen({view:v,element:wrap.current??undefined}),position:'top-right',index:4},
