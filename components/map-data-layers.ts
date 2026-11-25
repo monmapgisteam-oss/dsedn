@@ -14,11 +14,14 @@ const scales:Record<string,number>={parcels:80000,context:180000,roads:300000,ri
 const layerStyle:Record<string,{color:string;width:number;alpha?:number;dash?:boolean}>={
  boundary:{color:'#177965',width:1.6},grid:{color:'#d17a35',width:.8},roads:{color:'#a0a9af',width:.8},nationalRoads:{color:'#718294',width:1.4},soums:{color:'#94a3b8',width:1,dash:true},rivers:{color:'#269cce',width:1},riverProtection:{color:'#97d4e6',width:.4,alpha:.2},context:{color:'#91a9aa',width:.5,alpha:.12},parcels:{color:'#ad83c5',width:.6,alpha:.14},results:{color:'#13866c',width:1.5,alpha:.22},parcelOverlap:{color:'#dc5a52',width:1,alpha:.55},exclusions:{color:'#b98996',width:1,alpha:.15},
 };
+// Layers that stay at full strength while results are highlighted.
+const focusKeep=new Set(['results','parcelOverlap','centres']);
+const FOCUS_EFFECT='grayscale(70%) opacity(45%)';
 export class MapDataLayers{
  readonly graphics=new Map<string,GraphicsLayer>();
  readonly stats={graphicsBuilt:0,screeningUploads:0};
  private records=new Map<string,{features:Features;revision:number;built:boolean}>();
- private visibility:Record<string,boolean>={};private opacity:Record<string,number>={};private realistic=false;private overlap=false;private selected:string|null=null;private dead=false;
+ private visibility:Record<string,boolean>={};private opacity:Record<string,number>={};private realistic=false;private overlap=false;private selected:string|null=null;private dead=false;private focus=false;
  private screening?:FeatureLayer;private screeningRevision=0;
  constructor(private map:ArcMap,private loading:(message:string)=>void){
   const ids=['boundary','soums','riverProtection','rivers','context',...renewableLayers.filter(l=>l.id>=5).map(l=>renewableKey(l.id)),'roads','nationalRoads',...renewableLayers.filter(l=>l.id<5).map(l=>renewableKey(l.id)),'centres','roadProjects','results','parcelOverlap'];
@@ -33,12 +36,19 @@ export class MapDataLayers{
   if(this.shown(id))void this.build(id,record);
  }
  private shown(id:string){return (this.visibility[id]??true)&&!(this.realistic&&analysisLayers.has(id));}
- settings(visibility:Record<string,boolean>,opacity:Record<string,number>,realistic:boolean,overlapChecked=false){
+ settings(visibility:Record<string,boolean>,opacity:Record<string,number>,realistic:boolean,overlapChecked=false,focus=false){
   const overlap=!!visibility.parcelOverlap&&overlapChecked&&!realistic,changed=overlap!==this.overlap;
-  this.visibility=visibility;this.opacity=opacity;this.realistic=realistic;this.overlap=overlap;
+  const focused=focus&&!realistic,focusChanged=focused!==this.focus;
+  this.visibility=visibility;this.opacity=opacity;this.realistic=realistic;this.overlap=overlap;this.focus=focused;
   if(changed)for(const g of this.graphics.get('results')?.graphics??[])g.symbol=this.resultSymbol(String(g.attributes.cellId),String(g.attributes.status)) as never;
-  for(const [id,layer] of this.graphics){layer.visible=this.shown(id);layer.opacity=opacity[id]??1;const r=this.records.get(id);if(layer.visible&&r&&!r.built)void this.build(id,r);}
-  if(this.screening){this.screening.visible=this.shown('screening');this.screening.opacity=opacity.screening??.7;}
+  for(const [id,layer] of this.graphics){
+   layer.visible=this.shown(id);layer.opacity=opacity[id]??1;
+   // "Highlight results": supporting layers fade and lose colour so the suitability classes stand out.
+   // The user's own opacity still applies on top. Effects are 2D-only; SceneView ignores them.
+   layer.effect=focused&&!focusKeep.has(id)?FOCUS_EFFECT:null;
+   const r=this.records.get(id);if(layer.visible&&r&&!r.built)void this.build(id,r);
+  }
+  if(this.screening){this.screening.visible=this.shown('screening');this.screening.opacity=opacity.screening??.7;if(focusChanged)this.screening.renderer=this.screeningRenderer() as never;}
   const r=this.records.get('screening');if(this.shown('screening')&&r&&!r.built)void this.build('screening',r);
  }
  select(id:string|null){if(id===this.selected)return;this.selected=id;for(const g of this.graphics.get('results')?.graphics??[]){g.symbol=this.resultSymbol(String(g.attributes.cellId),String(g.attributes.status)) as never;}this.filterOverlap();}
@@ -68,9 +78,11 @@ export class MapDataLayers{
    layer.addMany(batch);this.stats.graphicsBuilt+=batch.length;if(id==='parcelOverlap')this.filterOverlap();await pause();
   }
  }
+ // While highlighting, excluded sample points recede so the scored classes read first.
+ private screeningRenderer(){return {type:'unique-value',field:'status',uniqueValueInfos:Object.entries(mapColors).map(([value,color])=>({value,symbol:{type:'simple-marker',size:value==='excluded'?2.2:3.6,color:value==='excluded'&&this.focus?rgba(color,.3):color,outline:{width:0}}}))};}
  private async uploadScreening(features:NonNullable<Features>){
   const revision=this.screeningRevision;
-  const layer=new FeatureLayer({id:'screening',title:'Тохиромжийн үнэлгээ',geometryType:'point',spatialReference:{wkid:4326},objectIdField:'oid',outFields:['*'],source:[],fields:[{name:'oid',type:'oid'},{name:'score',type:'double'},{name:'status',type:'string'},{name:'reason',type:'string'},{name:'stepM',type:'double'}],elevationInfo:{mode:'on-the-ground'},opacity:this.opacity.screening??.7,visible:this.shown('screening'),popupEnabled:true,popupTemplate:{title:'Тохиромжийн үнэлгээ · дээжийн төв',content:[{type:'fields',fieldInfos:[{fieldName:'score',label:'Оноо / 100'},{fieldName:'reason',label:'Хасагдсан шалтгаан'},{fieldName:'stepM',label:'Дээжийн алхам · м'}]}]},renderer:{type:'unique-value',field:'status',uniqueValueInfos:Object.entries(mapColors).map(([value,color])=>({value,symbol:{type:'simple-marker',size:value==='excluded'?2.2:3.6,color,outline:{width:0}}}))}});
+  const layer=new FeatureLayer({id:'screening',title:'Тохиромжийн үнэлгээ',geometryType:'point',spatialReference:{wkid:4326},objectIdField:'oid',outFields:['*'],source:[],fields:[{name:'oid',type:'oid'},{name:'score',type:'double'},{name:'status',type:'string'},{name:'reason',type:'string'},{name:'stepM',type:'double'}],elevationInfo:{mode:'on-the-ground'},opacity:this.opacity.screening??.7,visible:this.shown('screening'),popupEnabled:true,popupTemplate:{title:'Тохиромжийн үнэлгээ · дээжийн төв',content:[{type:'fields',fieldInfos:[{fieldName:'score',label:'Оноо / 100'},{fieldName:'reason',label:'Хасагдсан шалтгаан'},{fieldName:'stepM',label:'Дээжийн алхам · м'}]}]},renderer:this.screeningRenderer() as never});
   this.screening=layer;this.map.add(layer,2);
   try{
    await layer.load();

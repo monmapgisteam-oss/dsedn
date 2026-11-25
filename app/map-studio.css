@@ -52,3 +52,10 @@
 .map-studio .layout-focus{top:235px}.map-studio .scene-controls{top:236px}.map-studio:has(.layout-focus) .scene-controls{top:279px}
 @media(max-width:1500px){.map-studio .dimension-switch{top:191px}.map-studio .layout-focus{top:246px}.map-studio .scene-controls{top:246px}.map-studio:has(.layout-focus) .scene-controls{top:290px}}
 @media(max-width:1000px){.map-scale{left:12px;top:12px}.dsedn-shell .map-overview{top:46px}.map-studio .dimension-switch{top:180px}.map-studio .layout-focus{top:232px}.map-studio .scene-controls{top:232px}.map-studio:has(.layout-focus) .scene-controls{top:274px}}
+/* "Highlight results" switch inside the legend (the legend itself ignores the pointer). */
+.legend-focus{display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:10px;font-weight:600;color:var(--ink-2);pointer-events:auto;cursor:pointer}
+.legend-focus input{width:13px;height:13px;margin:0;accent-color:#177552}
+.legend-focus span{font-weight:400;font-size:9px;color:var(--muted)}
+/* Hover: name only. The full attribute panel opens on click. */
+.map-hover-name{position:absolute;z-index:6;display:flex;align-items:center;gap:7px;max-width:230px;padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:#fffffff5;box-shadow:0 4px 16px #12302418;font-size:11px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.map-hover-name>span{flex:none;width:8px;height:8px;border-radius:50%}

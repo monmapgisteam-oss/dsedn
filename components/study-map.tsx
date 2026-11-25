@@ -26,7 +26,7 @@ import {MapInspection} from './map-inspection';
 import {renewableLayers,renewableKey} from '@/lib/renewable-catalog';
 
 type View=MapView|SceneView;
-type Props={renewable?:Partial<Record<number,Collection>>;layerStatus?:Record<string,string>;parcelOverlapStatus?:'checked'|'unavailable';parcelOverlap?:Collection;screening?:Collection;rivers?:Collection;riverProtection?:Collection;bounds:Bounds;grid?:Collection;roads?:Collection;boundary?:Collection;exclusions?:Collection;parcels?:Collection;context?:Collection;centres?:Collection;nationalRoads?:Collection;soums?:Collection;roadProjects?:Collection;results:CellResult[];selected:string|null;onSelect:(id:string)=>void;onVisible:(id:string,value:boolean)=>void;visible:Record<string,boolean>;busy:boolean;layout?:Layout;planning?:boolean;windSpeed?:number|null;/** Reports the 2D map scale denominator when the view settles; 0 in 3D, where no single scale applies. */onScale?:(scale:number)=>void};
+type Props={renewable?:Partial<Record<number,Collection>>;layerStatus?:Record<string,string>;parcelOverlapStatus?:'checked'|'unavailable';parcelOverlap?:Collection;screening?:Collection;rivers?:Collection;riverProtection?:Collection;bounds:Bounds;grid?:Collection;roads?:Collection;boundary?:Collection;exclusions?:Collection;parcels?:Collection;context?:Collection;centres?:Collection;nationalRoads?:Collection;soums?:Collection;roadProjects?:Collection;results:CellResult[];selected:string|null;onSelect:(id:string)=>void;onVisible:(id:string,value:boolean)=>void;visible:Record<string,boolean>;busy:boolean;layout?:Layout;planning?:boolean;windSpeed?:number|null;/** All candidates' equipment, drawn in the 3D search view. */overview?:Layout;/** Reports the 2D map scale denominator when the view settles; 0 in 3D, where no single scale applies. */onScale?:(scale:number)=>void};
 const extent=(b:Bounds)=>new Extent({xmin:b[0],ymin:b[1],xmax:b[2],ymax:b[3],spatialReference:{wkid:4326}});
 
 export default function StudyMap(props:Props){
@@ -34,7 +34,7 @@ export default function StudyMap(props:Props){
  useEffect(()=>{current.current=props;},[props]);
  const focusRef=useRef<(detail?:boolean,home?:boolean)=>Promise<void>>(async()=>{});useEffect(()=>{focusRef.current=focus;});
  const [dim,setDim]=useState<'2d'|'3d'>('2d'),[readyDim,setReadyDim]=useState<'2d'|'3d'|null>(null),[error,setError]=useState(''),[upload,setUpload]=useState('');
- const [layerPanel,setLayerPanel]=useState(false),[opacities,setOpacities]=useState<Record<string,number>>({screening:.7});
+ const [layerPanel,setLayerPanel]=useState(false),[opacities,setOpacities]=useState<Record<string,number>>({screening:.7}),[highlight,setHighlight]=useState(true);
  // Hosts for the two app-specific buttons that live in the ArcGIS UI column beside the SDK widgets.
  const [slots,setSlots]=useState<{layers:HTMLElement;focus:HTMLElement}|null>(null);
  const basemaps=useRef<Record<string,Basemap>|null>(null);
@@ -101,20 +101,24 @@ export default function StudyMap(props:Props){
  },[dim]);
  useEffect(()=>()=>{manager.current?.destroy();manager.current=null;map.current?.destroy();map.current=null;basemaps.current=null;},[]);
  useEffect(()=>{if(!ready||lastBounds.current===props.bounds.join(','))return;lastBounds.current=props.bounds.join(',');if(view.current&&!current.current.planning)void view.current.goTo({target:extent(props.bounds).expand(1.15),...(dim==='3d'?{tilt:55,heading:15}:{})},{animate:false}).catch(()=>{});},[ready,dim,props.bounds]);
- useEffect(()=>{manager.current?.settings(props.visible,opacities,realistic,props.parcelOverlapStatus==='checked');},[ready,props.visible,opacities,realistic,props.parcelOverlapStatus]);
+ // Results are highlighted automatically whenever there are results to show; the legend switch turns it off.
+ const hasResults=props.results.length>0||!!props.screening?.features.length,focused=highlight&&hasResults&&!realistic;
+ useEffect(()=>{manager.current?.settings(props.visible,opacities,realistic,props.parcelOverlapStatus==='checked',focused);},[ready,props.visible,opacities,realistic,props.parcelOverlapStatus,focused]);
  useEffect(()=>{if(!ready||!manager.current)return;for(const [id,features] of Object.entries(data))manager.current.sync(id,features);},[ready,data]);
  useEffect(()=>{manager.current?.select(props.selected);},[ready,props.selected,data.results]);
 
  // Equipment geometry is created only for a new layout, and glTF is loaded only in 3D.
+ // In 3D the search view also shows every candidate's equipment (props.overview); planning shows the selected one.
+ const shownLayout=props.layout??(dim==='3d'?props.overview:undefined);
  useEffect(()=>{
-  if(!ready||!map.current||!props.layout?.assets.length){setEquipment(null);return;}
-  let disposed=false,layer:FeatureLayer|GraphicsLayer|undefined,release:(()=>void)|undefined;const m=map.current,layout=props.layout;
+  if(!ready||!map.current||!shownLayout?.assets.length){setEquipment(null);return;}
+  let disposed=false,layer:FeatureLayer|GraphicsLayer|undefined,release:(()=>void)|undefined;const m=map.current,layout=shownLayout;
   void import('./map-equipment').then(mod=>{
    if(disposed)return;if(dim==='3d'){const built=mod.equipmentLayer(layout);layer=built.layer;release=built.dispose;setEquipment(built.layer);}else{layer=mod.planFootprints(layout);release=()=>layer?.destroy();}
    layer.visible=current.current.visible.equipment!==false;layer.opacity=opacityRef.current.equipment??1;m.add(layer);
   }).catch(()=>{if(!disposed)setError('Тоноглолын загвар ачаалсангүй.');});
   return()=>{disposed=true;setEquipment(null);if(layer)m.remove(layer);release?.();};
- },[ready,dim,props.layout]);
+ },[ready,dim,shownLayout]);
  useEffect(()=>{for(const id of ['planned-equipment','equipment-plan']){const layer=map.current?.findLayerById(id);if(layer){layer.visible=props.visible.equipment!==false;layer.opacity=opacities.equipment??1;}}},[ready,dim,props.visible.equipment,opacities.equipment,equipment]);
  useEffect(()=>{
   if(!ready||dim!=='3d'||!equipment||!props.layout||props.layout.technology!=='wind'||!motion)return;
@@ -167,6 +171,6 @@ export default function StudyMap(props:Props){
   {dim==='3d'&&<details className="scene-controls" open><summary><Sun size={15}/>3D дүрслэл<span>Бодит хэмжээ</span></summary><div className="scene-controls-body"><label>Гэрэлтүүлэг · VI/21 <b>{hour}:00 УБ</b><input aria-label="Нарны гэрлийн цаг" type="range" min={7} max={20} value={hour} onChange={e=>setHour(Number(e.target.value))}/></label><label className="scene-quality">Чанар<select aria-label="3D дүрслэлийн чанар" value={quality} onChange={e=>setQuality(e.target.value as 'medium'|'high')}><option value="medium">Тэнцвэртэй</option><option value="high">Нарийвчилсан</option></select></label><label className="check-line"><input type="checkbox" checked={shadows} onChange={e=>setShadows(e.target.checked)}/>Ойрын сүүдэр</label>{props.layout?.technology==='wind'&&<label className="check-line"><input type="checkbox" checked={motion} onChange={e=>setMotion(e.target.checked)}/>Роторын хөдөлгөөн</label>}<label className="check-line"><input type="checkbox" checked={analysis} onChange={e=>setAnalysis(e.target.checked)}/>Шинжилгээний өнгө харуулах</label>{props.layout?.technology==='wind'&&<p>Цамхаг {props.layout.assumptions.hubM} м · ротор Ø{props.layout.assumptions.rotorM} м{motion&&windNote&&<small>{windNote}</small>}</p>}{props.layout?.technology==='solar'&&<p>{props.layout.assumptions.tiltDeg}° налуу · {props.layout.assumptions.rowPitchM.toFixed(1)} м эгнээний алхам</p>}</div></details>}
   {dim==='3d'&&props.visible.infrastructure&&nearInfrastructure&&infrastructureNote&&<div className="infrastructure-note">{infrastructureNote}</div>}
   {!ready&&!error&&<div className="map-loading-overlay"><span className="map-spinner"/>ArcGIS {dim.toUpperCase()} ачаалж байна…</div>}{error&&<div className="map-error" role="alert">{error}</div>}{ready&&upload&&<div className="map-upload" role="status"><span className="map-spinner"/>{upload}</div>}
-  <div className="map-legend"><strong>{overlap?'Газрын давхцал':realistic?(props.planning?'Бодит хэмжээт төлөвлөлт':'Дэд бүтцийн 3D дүрслэл'):props.screening?.features.length?'Тохиромжийн үнэлгээ':'Дэд бүтэц ба тооцооллын хил'}</strong>{overlap?<div>{[['#dc5a52','Бусдын / тодорхойгүй'],['#269b68','ДСЦТС']].map(([color,label])=><span key={color}><i style={{background:color}}/>{label}</span>)}</div>:!realistic&&<div>{(props.screening?.features.length?[['#23866a','70–100'],['#b6b950','45–69'],['#dda65b','0–44'],['#b69293','Хасагдсан']]:[['#d17a35','Цахилгаан шугам'],['#718294','Авто зам'],['#269cce','Гол']]).map(([color,label])=><span key={color}><i style={{background:color}}/>{label}</span>)}</div>}<small>{realistic?'Урьдчилсан төлөвлөлт · инженерийн эцсийн зураг биш':overlap?'Кадастр зураглаагүй хэсэг нь чөлөөтэй газар гэсэн үг биш':'Харагдац солих нь бүх хилд хийх тооцоог хязгаарлахгүй'}</small></div>
+  <div className="map-legend"><strong>{overlap?'Газрын давхцал':realistic?(props.planning?'Бодит хэмжээт төлөвлөлт':'Дэд бүтцийн 3D дүрслэл'):props.screening?.features.length?'Тохиромжийн үнэлгээ':'Дэд бүтэц ба тооцооллын хил'}</strong>{overlap?<div>{[['#dc5a52','Бусдын / тодорхойгүй'],['#269b68','ДСЦТС']].map(([color,label])=><span key={color}><i style={{background:color}}/>{label}</span>)}</div>:!realistic&&<div>{(props.screening?.features.length?[['#23866a','70–100'],['#b6b950','45–69'],['#dda65b','0–44'],['#b69293','Хасагдсан']]:[['#d17a35','Цахилгаан шугам'],['#718294','Авто зам'],['#269cce','Гол']]).map(([color,label])=><span key={color}><i style={{background:color}}/>{label}</span>)}</div>}<small>{realistic?'Урьдчилсан төлөвлөлт · инженерийн эцсийн зураг биш':overlap?'Кадастр зураглаагүй хэсэг нь чөлөөтэй газар гэсэн үг биш':'Харагдац солих нь бүх хилд хийх тооцоог хязгаарлахгүй'}</small>{hasResults&&!realistic&&<label className="legend-focus"><input type="checkbox" checked={highlight} onChange={e=>setHighlight(e.target.checked)}/>Үр дүнг онцлох<span>туслах давхаргыг бүдгэрүүлнэ</span></label>}</div>
  </div>;
 }

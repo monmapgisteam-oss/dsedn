@@ -59,3 +59,8 @@
 /* 3D pole/line note: bottom centre, clear of the 3D settings panel and the legend. */
 .dsedn-shell .infrastructure-note{left:50%;right:auto;bottom:30px;transform:translateX(-50%);width:max-content;max-width:min(420px,calc(100% - 560px))}
 @media(max-width:1250px){.dsedn-shell .infrastructure-note{max-width:calc(100% - 32px);bottom:100px}}
+/* Header title without the logo: no divider before it. */
+.dsedn-shell .project-brand>div{border-left:0;padding-left:0}
+.dsedn-shell .project-brand span{text-transform:uppercase;letter-spacing:.06em}
+.dsedn-shell .project-brand span{font-size:8px}
+@media(max-width:760px){.dsedn-shell .project-brand span{font-size:7px}}
